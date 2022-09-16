@@ -1,0 +1,10 @@
+layout_paragraphs_inline_editor.save_component:
+  path: '/layout-paragraphs-inline-editor/{layout_paragraphs_layout}/save-component/{uuid}'
+  defaults:
+    _controller: '\Drupal\layout_paragraphs_inline_editor\Controller\SaveComponentController::save'
+  options:
+    parameters:
+      layout_paragraphs_layout:
+        layout_paragraphs_layout_tempstore: TRUE
+  requirements:
+    _layout_paragraphs_builder_access: 'TRUE'

@@ -1,0 +1,7 @@
+name: Layout Paragraphs Inline Editor
+description: Provides quickedit-style, inline editing for text fields.
+type: module
+core_version_requirement: ^9
+package: Layout Paragraphs
+dependencies:
+  - layout_paragraphs:layout_paragraphs

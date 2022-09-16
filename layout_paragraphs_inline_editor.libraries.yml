@@ -1,0 +1,26 @@
+inline_editor:
+  css:
+    base:
+      build/css/base/inline-editor.css: {}
+  js:
+    build/js/inline-editor.js: {}
+
+inline_editor.ckeditor5:
+  js:
+    build/js/inline-editor.ckeditor5.js: {}
+  css:
+    component:
+      build/css/components/inline-editor.ckeditor5.css: {}
+  dependencies:
+    - layout_paragraphs_inline_editor/inline_editor
+    - ckeditor5/drupal.ckeditor5
+
+inline_editor.ckeditor:
+  js:
+    build/js/inline-editor.ckeditor.js: {}
+  css:
+    component:
+      build/css/components/inline-editor.css: {}
+  dependencies:
+    - layout_paragraphs_inline_editor/inline_editor
+    - ckeditor/drupal.ckeditor

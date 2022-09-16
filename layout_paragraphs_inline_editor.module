@@ -1,0 +1,136 @@
+<?php
+
+/**
+ * @file
+ * Contains Layout Paragraphs Inline Editor module.
+ */
+
+use Drupal\Core\Render\Element;
+use Drupal\editor\EditorInterface;
+use Drupal\Component\Utility\NestedArray;
+use Drupal\filter\Plugin\FilterInterface;
+
+/**
+ * Implements hook_editor_info_alter().
+ */
+function layout_paragraphs_inline_editor_editor_info_alter(&$editors) {
+  $editors['ckeditor']['layout_paragraphs_inplace_editing'] = [
+    'library' => 'layout_paragraphs_inline_editor/inline_editor.ckeditor',
+  ];
+  $editors['ckeditor5']['layout_paragraphs_inplace_editing'] = [
+    'library' => 'layout_paragraphs_inline_editor/inline_editor.ckeditor5',
+  ];
+}
+
+/**
+ * Implements hook_entity_display_build_alter().
+ */
+function layout_paragraphs_inline_editor_entity_display_build_alter(&$build, $context) {
+
+  /** @var \Drupal\Core\Entity\FieldableEntityInterface $entity */
+  $entity = $context['entity'];
+  /** @var \Drupal\Core\Entity\Display\EntityViewDisplayInterface $display */
+  $display = $context['display'];
+
+  if ($entity->getEntityTypeId() != 'paragraph' || !layout_paragraphs_inline_editor_is_builder()) {
+    return;
+  }
+
+  foreach (Element::children($build) as $field_name) {
+    if ($entity->get($field_name)->isEmpty()
+      && $entity->{$field_name}->access('view')
+      && ($formatter = $display->getRenderer($field_name))
+    ) {
+      $definition = $entity->get($field_name)->getFieldDefinition();
+      $component = $display->getComponent($field_name);
+      if ($formatter->getPluginDefinition()['provider'] == 'text') {
+        $build[$field_name] = [
+          '#theme' => 'field',
+          '#title' => $definition->getLabel(),
+          '#label_display' => $component['label'],
+          '#view_mode' => $context['view_mode'],
+          '#language' => $entity->get($field_name)->getLangcode(),
+          '#field_name' => $definition->getName(),
+          '#field_type' => 'string',
+          '#field_translatable' => $definition->isTranslatable(),
+          '#entity_type' => $entity->getEntityTypeId(),
+          '#bundle' => $entity->bundle(),
+          '#object' => $entity,
+          '#items' => [(object) ['_attributes' => []]],
+          '#is_multiple' => FALSE,
+          '#formatter' => 'string',
+          '#attributes' => ['data-placeholder' => 'Write something...'],
+          '#prefix' => '<div class="blah"><div id=""></div>',
+          '#suffix' => '</div>',
+          '0' => [
+            '#markup' => ' ',
+            '#format' => filter_default_format(),
+          ],
+        ];
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_preproces_field().
+ */
+function layout_paragraphs_inline_editor_preprocess_field(&$variables) {
+  if ($variables['entity_type'] == 'paragraph') {
+
+    $element = $variables['element'];
+    /** @var \Drupal\paragraphs\Entity\Paragraph $paragraph */
+    $paragraph = $element['#object'];
+
+    if (!layout_paragraphs_inline_editor_is_builder()) {
+      return;
+    }
+
+    // Check access.
+    if (!$paragraph->access('update')) {
+      return;
+    }
+
+    foreach (Element::children($element) as $key) {
+      if (!empty($element[$key]['#format'])) {
+        $format_id = $element[$key]['#format'];
+        /** @var \Drupal\editor\Entity\Editor $editor */
+        $editor = editor_load($format_id);
+        $editor_definition = ($editor instanceof EditorInterface)
+          ? \Drupal::service('plugin.manager.editor')->createInstance($editor->getEditor())->getPluginDefinition()
+          : [];
+        if (!empty($editor_definition['layout_paragraphs_inplace_editing'])) {
+          $variables['attributes']['class'][] = 'lp-is-editable';
+          $variables['attributes']['data-lp-field_name'] = $element['#field_name'];
+          $variables['attributes']['data-lp-view_mode'] = $element['#view_mode'];
+          $variables['attributes']['data-lp-format_id'] = $format_id;
+          $variables['attributes']['data-placeholder'] = 'Write something...';
+          $variables['#attached']['library'][] = $editor_definition['layout_paragraphs_inplace_editing']['library'];
+
+          // Add the format's attachments.
+          $manager = \Drupal::service('plugin.manager.editor');
+          $attachments = $manager->getAttachments([$format_id]);
+          $variables['#attached'] = NestedArray::mergeDeep($variables['#attached'], $attachments);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Returns TRUE if current route is a layout paragraphs builder route.
+ */
+function layout_paragraphs_inline_editor_is_builder() {
+  // Only enable on Layout Paragraphs builder pages.
+  // @todo Consider making it simpler to determine if in builder context.
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if (
+    !(substr($route_name, 0, 7) == 'entity.' && substr($route_name, -10) == '.edit_form')
+    && strpos($route_name, 'layout_paragraphs.builder.') === FALSE
+    && strpos($route_name, 'layout_paragraphs_templates.') === FALSE
+    && strpos($route_name, 'mercury_editor.inline_editor.') === FALSE
+  ) {
+    return FALSE;
+  }
+  return TRUE;
+}

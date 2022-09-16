@@ -1,0 +1,30 @@
+{
+  "name": "layout_paragraphs_inline_editor",
+  "version": "1.0.0",
+  "description": "Inline text editing for text fields with Layout Paragraphs",
+  "main": "rollup.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c && postcss source/css -d build/css",
+    "dev:css": "postcss source/css -d build/css --base source/css -w --verbose",
+    "dev:js": "rollup -c -w",
+    "dev": "concurrently --kill-others \"npm:dev:*\""
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "browser-sync": "^2.27.7",
+    "concurrently": "^6.2.0",
+    "cross-var": "^1.1.0",
+    "eslint": "^8.7.0",
+    "postcss-cli": "^8.3.1",
+    "postcss-pxtorem": "^6.0.0",
+    "prettier": "^2.5.1",
+    "rollup": "^2.50.2",
+    "rollup-plugin-terser": "^7.0.2"
+  },
+  "dependencies": {
+    "postcss": "^8.3.0",
+    "postcss-preset-env": "^6.7.0"
+  }
+}
